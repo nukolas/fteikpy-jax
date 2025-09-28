@@ -16,15 +16,13 @@ jobs:
       - uses: actions/setup-python@v4
         with:
             python-version: '3.9'
-      - name: Install fteikpy
-        run: |
-          pip install -e .[full]
-      - name: Install dependencies
-        run: |
-          pip install -r doc/requirements.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+      - name: Sync dependencies (full + dev + doc)
+        run: uv sync --dev --extra full --extra doc
       - name: Sphinx build
         run: |
-          sphinx-build -b html doc/source doc/build
+          uv run -q sphinx-build -b html doc/source doc/build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' }}

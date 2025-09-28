@@ -92,12 +92,12 @@ This project now uses `uv <https://github.com/astral-sh/uv>`__ for dependency ma
 - Lint check: ``uv run lint``
 - Format: ``uv run format``
 
-Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__:
+Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__ via uv:
 
 .. code:: bash
 
-   pip install -r doc/requirements.txt
-   sphinx-build -b html doc/source doc/build
+   uv sync --dev --extra doc
+   uv run -q sphinx-build -b html doc/source doc/build
 
 Usage
 -----

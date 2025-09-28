@@ -35,6 +35,15 @@ full = [
   "scipy",
   "meshio>=4.0",
 ]
+doc = [
+  "matplotlib",
+  "sphinx",
+  "sphinx-argparse",
+  "sphinx-gallery",
+  "pydata-sphinx-theme",
+  "sphinxcontrib-bibtex",
+  "pybtex-apa-style",
+]
 
 [project.urls]
 Homepage = "https://github.com/keurfonluu/fteikpy"
@@ -58,6 +67,8 @@ dev-dependencies = [
   "pytest",
   "pytest-cov",
   "twine",
+  # ci
+  "codecov",
 ]
 
 [tool.uv.scripts]
