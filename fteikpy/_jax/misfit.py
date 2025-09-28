@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import Tuple
 
 import jax
 from jax import numpy as jnp, lax
 
-from .eikonal3d import solve3d_jax
+from .eikonal3d import _solve3d_jax_impl
 
 
 def _trilinear_sample(tt: jnp.ndarray, gridsize: Tuple[float, float, float], points_local: jnp.ndarray) -> jnp.ndarray:
@@ -55,6 +56,7 @@ def _trilinear_sample(tt: jnp.ndarray, gridsize: Tuple[float, float, float], poi
     return c
 
 
+@partial(jax.jit, static_argnames=("nsweep",))
 def misfit_l2_jax(
     velocity: jnp.ndarray,
     gridsize: Tuple[float, float, float],
@@ -74,7 +76,9 @@ def misfit_l2_jax(
     Returns scalar 0.5 * ||t_pred - t_obs||^2
     """
     velocity = jnp.asarray(velocity, dtype=jnp.float64)
-    dz, dx, dy = gridsize
+    dz = jnp.asarray(gridsize[0], dtype=jnp.float64)
+    dx = jnp.asarray(gridsize[1], dtype=jnp.float64)
+    dy = jnp.asarray(gridsize[2], dtype=jnp.float64)
     origin = jnp.zeros(3, dtype=jnp.float64) if origin is None else jnp.asarray(origin, dtype=jnp.float64)
     sources = jnp.asarray(sources, dtype=jnp.float64)
     receivers = jnp.asarray(receivers, dtype=jnp.float64)
@@ -85,16 +89,18 @@ def misfit_l2_jax(
     src_local_all = sources - origin
     rec_local = receivers - origin
 
-    def body_fun(acc, i):
-        src_local = src_local_all[i]
-        tt = solve3d_jax(slow, dz, dx, dy, src_local, nsweep)
-        t_pred = _trilinear_sample(tt, (dz, dx, dy), rec_local)
-        mis = 0.5 * jnp.sum((t_pred - t_obs[i]) ** 2.0)
+    spacings = (dz, dx, dy)
+
+    def body_fun(acc, inputs):
+        src_local, t_obs_row = inputs
+        tt = _solve3d_jax_impl(slow, dz, dx, dy, src_local, nsweep)
+        t_pred = _trilinear_sample(tt, spacings, rec_local)
+        mis = 0.5 * jnp.sum((t_pred - t_obs_row) ** 2.0)
         return acc + mis, None
 
-    Ns = sources.shape[0]
-    misfit, _ = lax.scan(body_fun, 0.0, jnp.arange(Ns))
+    misfit, _ = lax.scan(body_fun, 0.0, (src_local_all, t_obs))
     return misfit
 
 
-grad_misfit_l2_jax = jax.grad(misfit_l2_jax)
+_grad_misfit_l2 = jax.grad(misfit_l2_jax)
+grad_misfit_l2_jax = jax.jit(_grad_misfit_l2, static_argnames=("nsweep",))

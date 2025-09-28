@@ -7,18 +7,18 @@ name = "fteikpy"
 dynamic = ["version"]
 description = "Accurate Eikonal solver for Python"
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = {text = "BSD 3-Clause License"}
 authors = [{name = "Keurfon Luu", email = "keurfonluu@outlook.com"}]
 classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Development Status :: 5 - Production/Stable",
-  "Programming Language :: Python :: 3.6",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Natural Language :: English",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering",
@@ -58,6 +58,7 @@ version = {attr = "fteikpy.__about__.__version__"}
 
 # uv project management
 [tool.uv]
+preview = true
 dev-dependencies = [
   "black",
   "build",
@@ -70,8 +71,3 @@ dev-dependencies = [
   # ci
   "codecov",
 ]
-
-[tool.uv.scripts]
-test = "pytest -q"
-lint = "bash -lc 'black --check fteikpy && isort --check fteikpy && docformatter -c -r fteikpy'"
-format = "bash -lc 'black -t py38 fteikpy && isort fteikpy && docformatter -r -i --blank --wrap-summaries 88 --wrap-descriptions 88 --pre-summary-newline fteikpy'"

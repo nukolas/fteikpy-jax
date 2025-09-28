@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import Tuple
+
+import numpy as np
 
 import jax
 from jax import numpy as jnp, lax
@@ -232,7 +235,15 @@ def _sweep8(tt, slow, dz, dx, dy):
     return tt
 
 
-def solve3d_jax(slow: jnp.ndarray, dz: float, dx: float, dy: float, src: jnp.ndarray, nsweep: int = 2) -> jnp.ndarray:
+@partial(jax.jit, static_argnames=("nsweep",))
+def _solve3d_jax_impl(
+    slow: jnp.ndarray,
+    dz: float,
+    dx: float,
+    dy: float,
+    src: jnp.ndarray,
+    nsweep: int = 2,
+) -> jnp.ndarray:
     """Solve 3D Eikonal using a JAX fast-sweeping implementation.
 
     Parameters
@@ -244,15 +255,11 @@ def solve3d_jax(slow: jnp.ndarray, dz: float, dx: float, dy: float, src: jnp.nda
     Returns
     - tt: traveltime grid with shape (nz+1, nx+1, ny+1)
     """
-    nz, nx, ny = slow.shape
-    condz = jnp.logical_and(0.0 <= src[0], src[0] <= dz * nz)
-    condx = jnp.logical_and(0.0 <= src[1], src[1] <= dx * nx)
-    condy = jnp.logical_and(0.0 <= src[2], src[2] <= dy * ny)
-    ok = jnp.logical_and(jnp.logical_and(condz, condx), condy)
-    def _raise(_):
-        return (_ for _ in ()).throw(ValueError("source out of bound"))
-    if not bool(ok):
-        _raise(None)
+    slow = jnp.asarray(slow, dtype=jnp.float64)
+    src = jnp.asarray(src, dtype=jnp.float64)
+    dz = jnp.asarray(dz, dtype=jnp.float64)
+    dx = jnp.asarray(dx, dtype=jnp.float64)
+    dy = jnp.asarray(dy, dtype=jnp.float64)
 
     tt, _ = _initialize_tt(slow, dz, dx, dy, src[0], src[1], src[2])
 
@@ -263,7 +270,37 @@ def solve3d_jax(slow: jnp.ndarray, dz: float, dx: float, dy: float, src: jnp.nda
     return tt
 
 
-def eikonal3d_jax(velocity: jnp.ndarray, gridsize: Tuple[float, float, float], source: jnp.ndarray, origin: jnp.ndarray | None = None, nsweep: int = 2) -> jnp.ndarray:
+def solve3d_jax(
+    slow: jnp.ndarray,
+    dz: float,
+    dx: float,
+    dy: float,
+    src: jnp.ndarray,
+    nsweep: int = 2,
+) -> jnp.ndarray:
+    """Validate inputs then dispatch to the jitted implementation."""
+    slow = jnp.asarray(slow, dtype=jnp.float64)
+    src = jnp.asarray(src, dtype=jnp.float64)
+    nz, nx, ny = slow.shape
+    src_host = np.asarray(src)
+    if src_host.shape != (3,):
+        raise ValueError("source must be a 3-vector")
+    condz = 0.0 <= src_host[0] <= dz * nz
+    condx = 0.0 <= src_host[1] <= dx * nx
+    condy = 0.0 <= src_host[2] <= dy * ny
+    if not (condz and condx and condy):
+        raise ValueError("source out of bound")
+
+    return _solve3d_jax_impl(slow, dz, dx, dy, src, nsweep)
+
+
+def eikonal3d_jax(
+    velocity: jnp.ndarray,
+    gridsize: Tuple[float, float, float],
+    source: jnp.ndarray,
+    origin: jnp.ndarray | None = None,
+    nsweep: int = 2,
+) -> jnp.ndarray:
     """Convenience wrapper taking velocity to traveltime via JAX.
 
     Parameters
@@ -278,4 +315,3 @@ def eikonal3d_jax(velocity: jnp.ndarray, gridsize: Tuple[float, float, float], s
     slow = 1.0 / jnp.asarray(velocity, dtype=jnp.float64)
     src_local = jnp.asarray(source, dtype=jnp.float64) - origin
     return solve3d_jax(slow, dz, dx, dy, src_local, nsweep)
-

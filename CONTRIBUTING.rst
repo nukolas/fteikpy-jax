@@ -21,7 +21,7 @@ The code is formatted with `black <https://github.com/psf/black>`__ so you don't
 
 .. code:: bash
 
-    uv run format
+    uv run -q bash -lc 'black -t py38 fteikpy && isort fteikpy && docformatter -r -i --blank --wrap-summaries 88 --wrap-descriptions 88 --pre-summary-newline fteikpy'
 
 Every new features must be unit tested in the directory ``test`` using the `pytest <https://docs.pytest.org/en/stable/>`__ framework. To run the test suite, run the command:
 

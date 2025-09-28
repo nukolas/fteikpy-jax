@@ -79,6 +79,7 @@ An optional JAX backend is provided for differentiable forward modeling and reve
 Notes
 ^^^^^
 - The JAX solver reimplements the fast-sweeping Eikonal update in pure `jax.numpy` and `jax.lax` to enable JIT and autodiff. The result grid shape is `(nz+1, nx+1, ny+1)` to keep parity with the original backend.
+- Both the traveltime solver and misfit helper dispatch to `jax.jit`-compiled kernels; expect a compilation hit on the first call and cached performance afterwards.
 - The misfit helper assumes all sources share the same receiver set for simplicity. Support for per-source receiver sets can be added similarly.
 - Nondifferentiability can occur at branch points of the min-operators; JAX provides subgradients almost everywhere but gradients may be undefined exactly at kinks.
 
@@ -88,9 +89,9 @@ Development with uv
 This project now uses `uv <https://github.com/astral-sh/uv>`__ for dependency management. Common commands:
 
 - Install dev deps: ``uv sync --dev``
-- Run tests: ``uv run test`` (alias for ``pytest -q``)
-- Lint check: ``uv run lint``
-- Format: ``uv run format``
+- Run tests: ``uv run -q pytest``
+- Lint check: ``uv run -q bash -lc 'black --check fteikpy && isort --check fteikpy && docformatter -c -r fteikpy'``
+- Format: ``uv run -q bash -lc 'black -t py38 fteikpy && isort fteikpy && docformatter -r -i --blank --wrap-summaries 88 --wrap-descriptions 88 --pre-summary-newline fteikpy'``
 
 Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__ via uv:
 
