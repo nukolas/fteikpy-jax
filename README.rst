@@ -82,6 +82,16 @@ Notes
 - The misfit helper assumes all sources share the same receiver set for simplicity. Support for per-source receiver sets can be added similarly.
 - Nondifferentiability can occur at branch points of the min-operators; JAX provides subgradients almost everywhere but gradients may be undefined exactly at kinks.
 
+Development with uv
+--------------------
+
+This project now uses `uv <https://github.com/astral-sh/uv>`__ for dependency management. Common commands:
+
+- Install dev deps: ``uv sync --dev``
+- Run tests: ``uv run test`` (alias for ``pytest -q``)
+- Lint check: ``uv run lint``
+- Format: ``uv run format``
+
 Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__:
 
 .. code:: bash

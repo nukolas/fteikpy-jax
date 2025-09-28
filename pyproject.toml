@@ -1,3 +1,66 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fteikpy"
+dynamic = ["version"]
+description = "Accurate Eikonal solver for Python"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.6"
+license = {text = "BSD 3-Clause License"}
+authors = [{name = "Keurfon Luu", email = "keurfonluu@outlook.com"}]
+classifiers = [
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Natural Language :: English",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+  "importlib_metadata",
+  "numpy",
+  "numba",
+]
+
+[project.optional-dependencies]
+full = [
+  "scipy",
+  "meshio>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/keurfonluu/fteikpy"
+Code = "https://github.com/keurfonluu/fteikpy"
+Issues = "https://github.com/keurfonluu/fteikpy/issues"
+
+[tool.setuptools]
+packages = {find = {}}
+
+[tool.setuptools.dynamic]
+version = {attr = "fteikpy.__about__.__version__"}
+
+# uv project management
+[tool.uv]
+dev-dependencies = [
+  "black",
+  "build",
+  "docformatter",
+  "invoke",
+  "isort",
+  "pytest",
+  "pytest-cov",
+  "twine",
+]
+
+[tool.uv.scripts]
+test = "pytest -q"
+lint = "bash -lc 'black --check fteikpy && isort --check fteikpy && docformatter -c -r fteikpy'"
+format = "bash -lc 'black -t py38 fteikpy && isort fteikpy && docformatter -r -i --blank --wrap-summaries 88 --wrap-descriptions 88 --pre-summary-newline fteikpy'"
