@@ -54,6 +54,34 @@ Documentation
 
 Refer to the online `documentation <https://keurfonluu.github.io/fteikpy/>`__ for detailed description of the API and examples.
 
+JAX backend and misfit gradients
+--------------------------------
+
+An optional JAX backend is provided for differentiable forward modeling and reverse-mode autodiff of a simple L2 traveltime misfit. If `jax` is installed, you can compute gradients with respect to the velocity model:
+
+.. code-block:: python
+
+   import jax
+   import jax.numpy as jnp
+   from fteikpy import misfit_l2_jax, grad_misfit_l2_jax
+
+   # Velocity model (nz, nx, ny), grid spacings, sources and receivers
+   velocity = jnp.ones((32, 32, 32)) * 3000.0  # m/s
+   gridsize = (10.0, 10.0, 10.0)               # (dz, dx, dy)
+   sources = jnp.array([[50.0, 50.0, 50.0]])   # one source (z, x, y)
+   receivers = jnp.array([[200.0, 200.0, 200.0]])
+   t_obs = jnp.array([[0.0]])  # example data
+
+   # Compute scalar misfit and gradient wrt velocity
+   J = misfit_l2_jax(velocity, gridsize, sources, receivers, t_obs)
+   dJ_dv = grad_misfit_l2_jax(velocity, gridsize, sources, receivers, t_obs)
+
+Notes
+^^^^^
+- The JAX solver reimplements the fast-sweeping Eikonal update in pure `jax.numpy` and `jax.lax` to enable JIT and autodiff. The result grid shape is `(nz+1, nx+1, ny+1)` to keep parity with the original backend.
+- The misfit helper assumes all sources share the same receiver set for simplicity. Support for per-source receiver sets can be added similarly.
+- Nondifferentiability can occur at branch points of the min-operators; JAX provides subgradients almost everywhere but gradients may be undefined exactly at kinks.
+
 Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__:
 
 .. code:: bash
